@@ -1,3 +1,6 @@
 data/
 *.npy
 *.npz
+
+models/
+__pycache__/
