@@ -7,6 +7,11 @@ class BaseExplainer():
 
         x_data = np.load(x_path)
         self.X_test = x_data['dados'] 
+
+        if 'features' in x_data:
+            self.feature_names = x_data['features']
+        else:
+            self.feature_names = [f"Sensor {i+1}" for i in range(self.X_test.shape[2])]
         
         y_data = np.load(y_path)
         self.y_test = y_data.get('dados', y_data.get('arr_0')) 

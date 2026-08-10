@@ -35,6 +35,7 @@ class SaliencyMapsExplainer(BaseExplainer):
         
         true_rul = self.get_true_rul(index)
         pred_rul = self.get_prediction(index)
+        num_sensores = len(self.feature_names)
 
         plt.figure(figsize=(10, 6))
         # Transpõe a matriz para (Sensores, Tempo) mantendo o padrão visual
@@ -43,7 +44,7 @@ class SaliencyMapsExplainer(BaseExplainer):
         plt.xlabel('Janela de Tempo (30 ciclos)')
         plt.ylabel('Sensores')
         plt.colorbar(label='Sensibilidade (Gradiente Absoluto Normalizado)')
-        plt.yticks(ticks=np.arange(19), labels=[f"S {i+1}" for i in range(19)])
+        plt.yticks(ticks=np.arange(num_sensores), labels=self.feature_names)
         plt.tight_layout()
         plt.show()
 
@@ -52,7 +53,7 @@ class SaliencyMapsExplainer(BaseExplainer):
         saliency_matrix = self.explain_instance(index)
         
         sensor_importance = np.sum(saliency_matrix, axis=0)
-        sensores_labels = [f"Sensor {i+1}" for i in range(19)]
+        sensores_labels = self.feature_names
         sorted_idx = np.argsort(sensor_importance)
         
         plt.figure(figsize=(10, 6))
@@ -74,6 +75,7 @@ class SaliencyMapsExplainer(BaseExplainer):
             all_saliency.append(self.explain_instance(i))
 
         mean_saliency = np.mean(all_saliency, axis=0)
+        num_sensores = len(self.feature_names)
 
         plt.figure(figsize=(10, 6))
         plt.imshow(mean_saliency.T, aspect='auto', cmap='coolwarm')
@@ -81,7 +83,7 @@ class SaliencyMapsExplainer(BaseExplainer):
         plt.xlabel('Janela de Tempo (30 ciclos)')
         plt.ylabel('Sensores')
         plt.colorbar(label='Sensibilidade Média')
-        plt.yticks(ticks=np.arange(19), labels=[f"S {i+1}" for i in range(19)])
+        plt.yticks(ticks=np.arange(num_sensores), labels=self.feature_names)
         
         plt.tight_layout()
         plt.show()

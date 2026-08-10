@@ -12,7 +12,8 @@ class LimeExplainer(BaseExplainer):
         
         self.background_data = self.X_test[:background_size].astype(np.float32)
         
-        self.feature_names = [f"Sensor {i+1}" for i in range(19)]
+        # self.feature_names já foi populado dinamicamente pela BaseExplainer!
+        num_features = len(self.feature_names)
         
         self.explainer = lime_tabular.RecurrentTabularExplainer(
             self.background_data,
@@ -23,7 +24,9 @@ class LimeExplainer(BaseExplainer):
             mode='regression'  
         )
         
-    def explain_instance(self, index, num_features=19):
+    def explain_instance(self, index, num_features=None):
+        if num_features is None:
+            num_features = len(self.feature_names)
 
         instance = self.get_instance(index)[0].astype(np.float32) 
         
@@ -59,7 +62,6 @@ class LimeExplainer(BaseExplainer):
         plt.title(f"Impacto das Features (LIME) - Amostra {index}", pad=20)
         plt.tight_layout()
         plt.show()
-
 
     def save_and_open_html(self, index, filename="lime_explicacao.html"):
         """

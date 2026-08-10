@@ -29,6 +29,7 @@ class ShapExplainer(BaseExplainer):
         
         true_rul = self.get_true_rul(index)
         pred_rul = self.get_prediction(index)
+        num_sensores = len(self.feature_names)
 
         plt.figure(figsize=(10, 6))
         plt.imshow(shap_matrix_2d.T, aspect='auto', cmap='coolwarm') 
@@ -36,7 +37,7 @@ class ShapExplainer(BaseExplainer):
         plt.xlabel('Janela de Tempo (30 ciclos)')
         plt.ylabel('Sensores')
         plt.colorbar(label='Valor SHAP (Impacto no RUL)')
-        plt.yticks(ticks=np.arange(19), labels=[f"S {i+1}" for i in range(19)])
+        plt.yticks(ticks=np.arange(num_sensores), labels=self.feature_names)
         plt.tight_layout()
         plt.show()
 
@@ -46,7 +47,7 @@ class ShapExplainer(BaseExplainer):
         shap_matrix_2d = shap_values[0, :, :, 0]
         
         sensor_importance = np.sum(np.abs(shap_matrix_2d), axis=0)
-        sensores_labels = [f"Sensor {i+1}" for i in range(19)]
+        sensores_labels = self.feature_names
         sorted_idx = np.argsort(sensor_importance)
         
         plt.figure(figsize=(10, 6))
@@ -74,7 +75,7 @@ class ShapExplainer(BaseExplainer):
         shap_values_2d = np.mean(shap_values_3d, axis=1)
         instances_2d = np.mean(instances, axis=1)
         
-        sensores_labels = [f"Sensor {i+1}" for i in range(19)]
+        sensores_labels = self.feature_names
 
         plt.figure(figsize=(10, 6))
         plt.title(f"Visão Global do Modelo ({num_samples} Amostras)")

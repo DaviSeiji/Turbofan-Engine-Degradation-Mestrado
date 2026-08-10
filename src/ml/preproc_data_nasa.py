@@ -212,7 +212,8 @@ if __name__ == "__main__":
 
         np.savez_compressed(f"{processed_path}/X_train_FD00{name}.npz", dados=X_train)
         np.savez_compressed(f"{processed_path}/y_train_FD00{name}.npz", dados=y_train)
-        np.savez_compressed(f"{processed_path}/X_test_FD00{name}.npz", dados=X_test)
+        
+        np.savez_compressed(f"{processed_path}/X_test_FD00{name}.npz", dados=X_test, features=features)
         np.savez_compressed(f"{processed_path}/y_test_FD00{name}.npz", dados=y_test)
 
         print(f"✅ Processamento do FD00{name} concluído e tensores salvos! "

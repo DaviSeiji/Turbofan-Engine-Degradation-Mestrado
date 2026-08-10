@@ -79,8 +79,10 @@ class GradCamExplainer(BaseExplainer):
         ax1.set_xticks(range(total_timesteps))
         ax1.set_xticklabels([])
         
+        # Iterando sobre cada sensor e usando o nome real guardado em self.feature_names
         for i in range(instance.shape[1]):
-            ax2.plot(instance[:, i], alpha=0.6, linewidth=1.5)
+            nome_sensor = self.feature_names[i]
+            ax2.plot(instance[:, i], alpha=0.6, linewidth=1.5, label=nome_sensor)
             
         ax2.set_xlabel('Janela de Tempo (30 ciclos)')
         ax2.set_ylabel('Sensores (Normalizados)')

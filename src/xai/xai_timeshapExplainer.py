@@ -10,7 +10,7 @@ class TimeShapExplainer(BaseExplainer):
 
         self.baseline = np.zeros((1, self.X_test.shape[1], self.X_test.shape[2]), dtype=np.float32)
         
-        self.feature_names = [f"Sensor {i+1}" for i in range(19)]
+        # self.feature_names já foi populado dinamicamente pela BaseExplainer!
 
         self.predict_wrapper = lambda x: self.model.predict(x, verbose=0)
 
