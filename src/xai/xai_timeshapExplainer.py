@@ -48,6 +48,8 @@ class TimeShapExplainer(BaseExplainer):
             pruned_idx=0                  
         )
 
+        event_shap_df['Feature'] = event_shap_df['Feature'].astype(str).str.extract(r'(\d+)').astype(int)
+
         return event_shap_df
 
 
@@ -82,6 +84,7 @@ class TimeShapExplainer(BaseExplainer):
         true_rul = self.get_true_rul(index)
         pred_rul = self.get_prediction(index)
 
+        # CORREÇÃO: Ordenação numérica correta dos ciclos
         df_event = df_event.sort_values(by='Feature')
         
         event_ids = df_event['Feature'].values
