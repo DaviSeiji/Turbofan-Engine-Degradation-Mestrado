@@ -7,7 +7,8 @@ import webbrowser
 import os
 
 class LimeExplainer(BaseExplainer):
-    def __init__(self, model_path, x_path, y_path, background_size=500):
+    def __init__(self, model_path, x_path, y_path, background_size=500,
+                 discretize_continuous=True, random_state=None):
         super().__init__(model_path, x_path, y_path)
         
         self.background_data = self.X_test[:background_size].astype(np.float32)
@@ -19,12 +20,13 @@ class LimeExplainer(BaseExplainer):
             self.background_data,
             training_labels=self.y_test[:background_size],
             feature_names=self.feature_names,
-            discretize_continuous=True,
+            discretize_continuous=discretize_continuous,
             class_names=['RUL'],
-            mode='regression'  
+            mode='regression',
+            random_state=random_state,
         )
         
-    def explain_instance(self, index, num_features=None):
+    def explain_instance(self, index, num_features=None, num_samples=5000):
         if num_features is None:
             num_features = len(self.feature_names)
 
@@ -37,7 +39,8 @@ class LimeExplainer(BaseExplainer):
         exp = self.explainer.explain_instance(
             instance, 
             predict_wrapper, 
-            num_features=num_features
+            num_features=num_features,
+            num_samples=num_samples,
         )
         
         return exp

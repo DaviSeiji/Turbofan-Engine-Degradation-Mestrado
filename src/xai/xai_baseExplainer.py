@@ -1,3 +1,8 @@
+import os
+
+# Reduz mensagens informativas do TensorFlow; deve vir antes do import abaixo.
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+
 import numpy as np
 import tensorflow as tf
 

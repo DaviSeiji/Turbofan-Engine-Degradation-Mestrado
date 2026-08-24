@@ -1,7 +1,21 @@
+import os
+import warnings
+
+# Deve ser definido antes de qualquer importacao do TensorFlow/SHAP.
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+
 import shap
 import numpy as np
 import matplotlib.pyplot as plt
 from src.xai.xai_baseExplainer import BaseExplainer 
+
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"The structure of `inputs` doesn't match the expected structure\.",
+    category=UserWarning,
+    module=r"keras\.src\.models\.functional",
+)
 
 class ShapExplainer(BaseExplainer):
     def __init__(self, model_path, x_path, y_path, background_size=100):
