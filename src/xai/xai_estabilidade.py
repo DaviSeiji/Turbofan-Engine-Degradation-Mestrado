@@ -170,7 +170,7 @@ def avaliar_estabilidade_consenso_total(X_train, y_train, x_path, y_test_path, f
 
 def plotar_estabilidade(contagem_sensores, num_runs, dataset_name):
     """
-    Plota o gráfico de barras evidenciando a estabilidade da escolha de features.
+    Salva versões em português e inglês em results/xai_estabilidade, sem exibir.
     """
     sensores_unicos = list(contagem_sensores.keys())
     frequencias = list(contagem_sensores.values())
@@ -186,7 +186,7 @@ def plotar_estabilidade(contagem_sensores, num_runs, dataset_name):
         yval = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom', fontsize=10, fontweight='bold')
 
-    plt.axhline(y=num_runs, color='red', linestyle='--', linewidth=1.5, label=f'Consenso Absoluto ({num_runs} Treinos)')
+    linha_consenso = plt.axhline(y=num_runs, color='red', linestyle='--', linewidth=1.5, label=f'Consenso Absoluto ({num_runs} Treinos)')
     plt.title(f"Estabilidade das Explicações de Consenso ({dataset_name})", fontsize=14)
     plt.ylabel("Frequência de aparição no Top 5", fontsize=12)
     plt.xlabel("Sensores", fontsize=12)
@@ -194,8 +194,18 @@ def plotar_estabilidade(contagem_sensores, num_runs, dataset_name):
     plt.legend()
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
-    plt.savefig(f"estabilidade_{dataset_name}.png")
-    #plt.show()
+    pasta_resultados = os.path.join(raiz_projeto, 'results', 'xai_estabilidade')
+    os.makedirs(pasta_resultados, exist_ok=True)
+    plt.savefig(os.path.join(pasta_resultados, f"estabilidade_{dataset_name}.png"), dpi=300, bbox_inches='tight')
+
+    # Reutiliza as mesmas barras e contagens; muda somente os textos.
+    linha_consenso.set_label(f'Full consensus ({num_runs} training runs)')
+    plt.title(f"Consensus Explanation Stability ({dataset_name})", fontsize=14)
+    plt.ylabel("Frequency of appearance in the Top 5", fontsize=12)
+    plt.xlabel("Sensors", fontsize=12)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(pasta_resultados, f"stability_{dataset_name.lower()}.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 
