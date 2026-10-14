@@ -14,6 +14,7 @@ from optuna_integration.tfkeras import TFKerasPruningCallback
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import tensorflow as tf
 from tensorflow import keras
+from src.ml.transformer_layers import PositionalEmbedding
 
 
 # Habilite os demais datasets depois de validar FD001.
@@ -25,35 +26,6 @@ PASTA_DADOS = RAIZ_PROJETO / 'data' / 'processed_data'
 PASTA_MODELOS = RAIZ_PROJETO / 'models' / 'best_models_transformer'
 PASTA_ESTUDOS = RAIZ_PROJETO / 'models' / 'optuna_logs_transformer'
 CAMINHO_CSV = RAIZ_PROJETO / 'models' / 'resultados_finais_transformer_optuna.csv'
-
-
-@keras.utils.register_keras_serializable(package='RUL')
-class PositionalEmbedding(keras.layers.Layer):
-    """Embedding temporal treinável, somado à projeção das features."""
-
-    def __init__(self, window_size, d_model, **kwargs):
-        super().__init__(**kwargs)
-        self.window_size = int(window_size)
-        self.d_model = int(d_model)
-
-    def build(self, input_shape):
-        self.position_embeddings = self.add_weight(
-            name='position_embeddings',
-            shape=(self.window_size, self.d_model),
-            initializer='glorot_uniform',
-            trainable=True,
-        )
-        super().build(input_shape)
-
-    def call(self, inputs):
-        return inputs + self.position_embeddings
-
-    def get_config(self):
-        return {
-            **super().get_config(),
-            'window_size': self.window_size,
-            'd_model': self.d_model,
-        }
 
 
 def transformer_encoder(inputs, d_model, num_heads, ff_dim, dropout):
