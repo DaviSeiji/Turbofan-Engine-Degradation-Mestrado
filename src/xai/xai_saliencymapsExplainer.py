@@ -18,11 +18,14 @@ class SaliencyMapsExplainer(BaseExplainer):
             predictions = self.model(inputs_tensor, training=False)
             loss = predictions[:, 0]
 
+        # Mede quanto a previsão é sensível a cada valor da entrada.
         grads = tape.gradient(loss, inputs_tensor)
 
+        # Usa a magnitude do gradiente, sem indicar aumento ou queda do RUL.
         saliency = tf.abs(grads)
         saliency = saliency[0].numpy()
 
+        # Normaliza a importância pelo maior valor desta janela.
         max_val = np.max(saliency)
         if max_val > 0:
             saliency /= max_val

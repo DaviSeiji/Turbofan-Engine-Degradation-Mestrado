@@ -21,6 +21,7 @@ class ShapExplainer(BaseExplainer):
     def __init__(self, model_path, x_path, y_path, background_size=100):
         super().__init__(model_path, x_path, y_path)
         
+        # Usa as primeiras janelas de teste como referência do SHAP.
         self.background_data = self.X_test[:background_size].astype(np.float32)
 
         self.explainer = shap.GradientExplainer(self.model, self.background_data)
@@ -29,6 +30,7 @@ class ShapExplainer(BaseExplainer):
 
         instance = self.get_instance(index)
 
+        # Calcula as contribuições de cada sensor e ciclo para esta previsão.
         shap_values = self.explainer.shap_values(instance)
         
         if isinstance(shap_values, list):
@@ -60,6 +62,7 @@ class ShapExplainer(BaseExplainer):
         shap_values = self.explain_instance(index)
         shap_matrix_2d = shap_values[0, :, :, 0]
         
+        # Soma as magnitudes ao longo do tempo para comparar os sensores.
         sensor_importance = np.sum(np.abs(shap_matrix_2d), axis=0)
         sensores_labels = self.feature_names
         sorted_idx = np.argsort(sensor_importance)

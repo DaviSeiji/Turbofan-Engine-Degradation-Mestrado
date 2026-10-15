@@ -11,6 +11,7 @@ class IntegratedGradientsExplainer(BaseExplainer):
 
         self.sample_shape = self.X_test[0].shape
         
+        # Usa uma entrada de zeros como referência quando nenhuma é fornecida.
         if baseline is None:
             self.baseline = tf.zeros(shape=self.sample_shape)
         else:
@@ -24,6 +25,7 @@ class IntegratedGradientsExplainer(BaseExplainer):
             predictions = self.model(inputs)
         return tape.gradient(predictions, inputs)
 
+    # Cria pontos entre a referência e a amostra analisada.
     def generate_interpolants(self, sample, m_steps=50):
 
         alphas = tf.linspace(start=0.0, stop=1.0, num=m_steps+1)
@@ -45,6 +47,7 @@ class IntegratedGradientsExplainer(BaseExplainer):
 
         gradients = self.compute_gradients(interpolated_inputs)
 
+        # Aproxima a integral pela média dos gradientes ao longo do caminho.
         avg_gradients = tf.reduce_mean(gradients[:-1], axis=0)
 
         integrated_gradients = (sample - self.baseline) * avg_gradients

@@ -21,6 +21,7 @@ class WindowShapExplainer(BaseExplainer):
             
         self.num_windows = self.timesteps // self.window_size
 
+    # Mantém os blocos marcados com 1 e substitui os demais pela referência.
     def _mask_to_3d(self, mask_matrix, original_instance):
             n_samples = mask_matrix.shape[0]
             
@@ -48,6 +49,7 @@ class WindowShapExplainer(BaseExplainer):
 
         background = np.zeros((1, self.num_windows))
         
+        # Trata cada bloco temporal como uma variável a ser explicada.
         explainer = shap.KernelExplainer(predict_wrapper, background)
         return explainer
 
@@ -56,6 +58,7 @@ class WindowShapExplainer(BaseExplainer):
 
         explainer = self.get_explainer(index)
 
+        # Explica a janela completa, com todos os blocos presentes.
         instance_to_explain = np.ones((1, self.num_windows))
         
         shap_values = explainer.shap_values(instance_to_explain, nsamples=n_samples, silent=True)

@@ -33,6 +33,7 @@ def gerar_tabela_consenso(shap_explainer, saliency_explainer, ig_explainer, feat
     saliency_importances = np.zeros(n_sensores)
     ig_importances = np.zeros(n_sensores)
            
+    # Acumula a importância dos sensores nas amostras analisadas.
     for i in range(num_samples):
 
         sv = shap_explainer.explain_instance(i)
@@ -46,6 +47,7 @@ def gerar_tabela_consenso(shap_explainer, saliency_explainer, ig_explainer, feat
         ig = ig_explainer.explain_instance(i)
         ig_importances += np.sum(np.abs(ig), axis=0)
 
+    # Os dez primeiros sensores recebem pontos de 10 a 1.
     def get_top10_scores(importances):
         top_indices = np.argsort(importances)[-10:][::-1]
         scores = {}
@@ -62,6 +64,7 @@ def gerar_tabela_consenso(shap_explainer, saliency_explainer, ig_explainer, feat
 
     consenso = {}
 
+    # Soma os pontos dos três métodos para formar o consenso.
     for sensor in feature_names:
         score_total = shap_scores.get(sensor, 0) + sal_scores.get(sensor, 0) + ig_scores.get(sensor, 0)
         
@@ -165,6 +168,7 @@ def avaliar_estabilidade_consenso_total(X_train, y_train, x_path, y_test_path, f
         del shap_exp, sal_exp, ig_exp
         tf.keras.backend.clear_session()
 
+    # Conta presenças no Top-5, não apenas na primeira posição.
     return Counter(historico_top5_consenso)
 
 

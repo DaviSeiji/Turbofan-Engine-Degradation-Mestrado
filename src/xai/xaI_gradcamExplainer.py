@@ -41,12 +41,14 @@ class GradCamExplainer(BaseExplainer):
             predictions = x
             loss = predictions[:, 0]
             
+        # Calcula a sensibilidade da previsão às ativações convolucionais.
         grads = tape.gradient(loss, conv_outputs)
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1))
         
         conv_outputs = conv_outputs[0]
         heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
         heatmap = tf.squeeze(heatmap)
+        # Mantém apenas as contribuições positivas no mapa.
         heatmap = tf.maximum(heatmap, 0)
         
         max_heat = tf.math.reduce_max(heatmap)
@@ -57,6 +59,7 @@ class GradCamExplainer(BaseExplainer):
 
         total_timesteps = self.X_test.shape[1]
         zoom_factor = total_timesteps / len(heatmap)
+        # Ajusta o mapa para o número de ciclos da janela original.
         heatmap_resized = scipy.ndimage.zoom(heatmap, zoom_factor, order=1)
         
         return heatmap_resized

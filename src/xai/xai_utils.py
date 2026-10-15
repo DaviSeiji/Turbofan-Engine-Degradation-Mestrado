@@ -34,6 +34,7 @@ def plot_decoded_shap(model, X_test_2d, raw_file_path, sequence_length=30, sampl
         for feat in features_list:
             # t=sequence_length-1 é o momento da previsão (t-0)
             tempo_relativo = (sequence_length - 1) - t
+            # Identifica cada coluna pelo sensor e pelo ciclo relativo.
             nomes_decodificados.append(f"{feat}_(t-{tempo_relativo})")
 
     # 3. Amostragem para evitar travamento da memória
@@ -44,6 +45,7 @@ def plot_decoded_shap(model, X_test_2d, raw_file_path, sequence_length=30, sampl
 
     # 4. Calculando os valores SHAP
     print("Calculando contribuições marginais (SHAP)... ⏳")
+    # Usa o explicador SHAP específico para modelos de árvores.
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_test_sample)
 

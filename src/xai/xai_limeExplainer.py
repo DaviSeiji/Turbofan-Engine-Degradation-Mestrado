@@ -11,6 +11,7 @@ class LimeExplainer(BaseExplainer):
                  discretize_continuous=True, random_state=None):
         super().__init__(model_path, x_path, y_path)
         
+        # Usa as primeiras janelas de teste como referência para o LIME.
         self.background_data = self.X_test[:background_size].astype(np.float32)
         
         # self.feature_names já foi populado dinamicamente pela BaseExplainer!
@@ -32,10 +33,12 @@ class LimeExplainer(BaseExplainer):
 
         instance = self.get_instance(index)[0].astype(np.float32) 
         
+        # Adapta a saída do modelo ao formato esperado pelo LIME.
         def predict_wrapper(data_3d_batch):
             preds = self.model.predict(data_3d_batch.astype(np.float32), verbose=0)
             return preds.flatten() 
 
+        # Ajusta uma explicação local usando perturbações da janela.
         exp = self.explainer.explain_instance(
             instance, 
             predict_wrapper, 

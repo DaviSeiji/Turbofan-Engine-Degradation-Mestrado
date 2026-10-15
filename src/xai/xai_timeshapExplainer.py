@@ -8,12 +8,14 @@ class TimeShapExplainer(BaseExplainer):
     def __init__(self, model_path, x_path, y_path):
         super().__init__(model_path, x_path, y_path)
 
+        # Usa uma sequência de zeros como referência.
         self.baseline = np.zeros((1, self.X_test.shape[1], self.X_test.shape[2]), dtype=np.float32)
         
         # self.feature_names já foi populado dinamicamente pela BaseExplainer!
 
         self.predict_wrapper = lambda x: self.model.predict(x, verbose=0)
 
+    # Avalia a contribuição de cada sensor na janela.
     def explain_features(self, index, n_samples=3200):
 
         instance = self.get_instance(index).astype(np.float32)
@@ -32,6 +34,7 @@ class TimeShapExplainer(BaseExplainer):
 
         return feat_shap_df
 
+    # Avalia a contribuição de cada ciclo da janela.
     def explain_events(self, index, n_samples=3200):
 
         instance = self.get_instance(index).astype(np.float32)

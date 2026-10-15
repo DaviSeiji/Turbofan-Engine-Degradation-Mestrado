@@ -20,6 +20,7 @@ class MyHyperModel(kt.HyperModel):
     def __init__(self, num_sensores):
         self.num_sensores = num_sensores
         
+    # Monta uma CNN com os hiperparâmetros escolhidos pelo KerasTuner.
     def build(self, hp):
         model = Sequential()
         
@@ -85,6 +86,7 @@ if __name__ == "__main__":
         # Chama a classe passando a quantidade correta
         hypermodel = MyHyperModel(num_sensores=qtd_sensores)
         
+        # Busca configurações com menor erro de validação.
         tuner = kt.Hyperband(
             hypermodel,
             objective='val_loss',
@@ -125,6 +127,7 @@ if __name__ == "__main__":
         print(f"- Learning Rate: {best_hps.get('learning_rate')}")
         
         print("\nTreinando o modelo final campeão...")
+        # Cria um novo modelo usando a melhor configuração encontrada.
         best_model = tuner.hypermodel.build(best_hps)
         history = best_model.fit(
             X_train, y_train, 
@@ -134,6 +137,7 @@ if __name__ == "__main__":
             verbose=0 
         )
         
+        # Calcula MAE e RMSE nas janelas de teste.
         y_pred = best_model.predict(X_test, verbose=0)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
         mae = mean_absolute_error(y_test, y_pred)

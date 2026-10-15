@@ -19,6 +19,7 @@ os.makedirs('models/best_models_cnn_lstm', exist_ok=True)
 
 def create_objective(X_train, y_train):
 
+    # Cada trial testa uma configuração da CNN-LSTM.
     def objective(trial):
         filters = trial.suggest_categorical('filters', [32, 64, 128])
         kernel_size = trial.suggest_int('kernel_size', 3, 5)
@@ -41,6 +42,7 @@ def create_objective(X_train, y_train):
 
         model.compile(optimizer=Adam(learning_rate=lr), loss='mse', metrics=['mae'])
 
+        # Interrompe o treino sem melhora e permite podar trials pouco promissores.
         early_stop = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
         pruning_callback = TFKerasPruningCallback(trial, 'val_loss')
 
@@ -53,6 +55,7 @@ def create_objective(X_train, y_train):
             verbose=0 
         )
 
+        # O Optuna tenta minimizar o menor MSE obtido na validação.
         return min(history.history['val_loss'])
     
     return objective
@@ -74,6 +77,7 @@ if __name__ == "__main__":
         y_test = np.load(f"data/processed_data/y_test_{motor}.npz")['dados']
 
         db_path = f"sqlite:///models/optuna_logs/optuna_study_{motor}.db"
+        # Cria ou retoma o estudo deste dataset.
         study = optuna.create_study(
             direction='minimize', 
             study_name=f"cnn_lstm_{motor}",
@@ -96,6 +100,7 @@ if __name__ == "__main__":
         
         print("\nTreinando o modelo final campeão...")
         
+        # Reconstrói a CNN-LSTM campeã para o treinamento final.
         best_model = Sequential()
         best_model.add(Input(shape=(X_train.shape[1], X_train.shape[2])))
         best_model.add(Conv1D(filters=best_hps['filters'], 
@@ -123,6 +128,7 @@ if __name__ == "__main__":
             verbose=0
         )
 
+        # Avalia o modelo final no teste, sem usar esse erro na busca.
         y_pred = best_model.predict(X_test, verbose=0)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
         mae = mean_absolute_error(y_test, y_pred)

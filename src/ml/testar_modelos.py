@@ -20,11 +20,13 @@ if str(RAIZ_PROJETO) not in sys.path:
 from src.ml.model_builders import build_cnn_lstm, build_transformer
 
 
+# Seleciona os modelos, datasets e seeds que serão avaliados.
 MODELOS_ATIVOS = ['CNN-LSTM', 'Transformer']
 DATASETS = ['FD001', 'FD002', 'FD003', 'FD004']
 SEEDS = [1, 2, 3, 4, 5]
 REEXECUTAR_EXISTENTES = False
 
+# Liga cada modelo ao seu builder e ao estudo Optuna correspondente.
 MODELOS = {
     'CNN-LSTM': {
         'builder': build_cnn_lstm,
@@ -46,6 +48,7 @@ METRICAS = ['MAE', 'RMSE', 'MedianAE', 'P95AE', 'MaxAE']
 COLUNAS = CHAVES + METRICAS + ['Epochs', 'TrainTimeSeconds']
 
 
+# Lê os melhores parâmetros já encontrados, sem executar nova busca.
 def carregar_best_params(nome_modelo, dataset):
     config = MODELOS[nome_modelo]
     banco = Path(config['optuna_dir']) / f'optuna_study_{dataset}.db'
@@ -81,6 +84,7 @@ def carregar_best_params(nome_modelo, dataset):
             storage.engine.dispose()
 
 
+# Carrega os NPZ existentes, sem refazer o pré-processamento.
 def carregar_dados(dataset):
     arrays = []
     for prefixo in ['X_train', 'y_train', 'X_test', 'y_test']:
@@ -96,6 +100,7 @@ def carregar_dados(dataset):
     return X_train, y_train, X_test, y_test
 
 
+# Compara previsões e RUL real com os formatos alinhados.
 def calcular_metricas(y_true, y_pred):
     real = np.asarray(y_true).reshape(-1)
     previsto = np.asarray(y_pred).reshape(-1)
@@ -113,6 +118,7 @@ def calcular_metricas(y_true, y_pred):
     }
 
 
+# Treina um modelo do zero e avalia o teste para uma seed.
 def executar_seed(nome_modelo, dataset, seed, params, dados):
     keras.backend.clear_session()
     keras.utils.set_random_seed(seed)
@@ -141,6 +147,7 @@ def executar_seed(nome_modelo, dataset, seed, params, dados):
         gc.collect()
 
 
+# Confere os resultados já salvos antes de retomar o benchmark.
 def carregar_resultados():
     if not CSV_DETALHADO.exists():
         return pd.DataFrame(columns=COLUNAS)
@@ -168,6 +175,7 @@ def resumir_resultados(tabela):
     return resumo.reset_index()
 
 
+# Só substitui o CSV depois que a nova versão foi escrita por completo.
 def salvar_csv_atomico(tabela, caminho):
     caminho.parent.mkdir(parents=True, exist_ok=True)
     temporario = None
@@ -197,6 +205,7 @@ def main():
 
     tabela = carregar_resultados()
     concluidos = set(tabela[CHAVES].itertuples(index=False, name=None))
+    # Pula combinações concluídas, exceto quando a reexecução está habilitada.
     pendentes = [
         (modelo, dataset, seed)
         for dataset in DATASETS for modelo in MODELOS_ATIVOS for seed in SEEDS

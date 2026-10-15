@@ -32,6 +32,7 @@ def transformer_encoder(inputs, d_model, num_heads, ff_dim, dropout):
     """Mantém d_model nas duas conexões residuais."""
     if d_model % num_heads != 0:
         raise ValueError('d_model deve ser divisível por num_heads.')
+    # A atenção relaciona os ciclos da janela.
     attention = keras.layers.MultiHeadAttention(
         num_heads=num_heads, key_dim=d_model // num_heads,
         output_shape=d_model, dropout=dropout,
@@ -50,6 +51,7 @@ def transformer_encoder(inputs, d_model, num_heads, ff_dim, dropout):
 
 def build_transformer(input_shape, params):
     inputs = keras.layers.Input(shape=input_shape)
+    # Projeta as features para manter dimensões compatíveis nos residuais.
     x = keras.layers.Dense(params['d_model'])(inputs)
     x = PositionalEmbedding(input_shape[0], params['d_model'])(x)
     for _ in range(params['num_layers']):
@@ -57,6 +59,7 @@ def build_transformer(input_shape, params):
             x, params['d_model'], params['num_heads'],
             params['ff_dim'], params['dropout_rate'],
         )
+    # Resume a janela antes da previsão do RUL.
     x = keras.layers.GlobalAveragePooling1D()(x)
     x = keras.layers.Dense(32, activation='relu')(x)
     x = keras.layers.Dropout(params['dropout_rate'])(x)
@@ -70,6 +73,7 @@ def build_transformer(input_shape, params):
 
 
 def create_objective(X_train, y_train):
+    # Cada trial treina uma configuração proposta pelo Optuna.
     def objective(trial):
         keras.backend.clear_session()
         keras.utils.set_random_seed(SEED + trial.number)
@@ -97,6 +101,7 @@ def create_objective(X_train, y_train):
                 callbacks=[early_stop, TFKerasPruningCallback(trial, 'val_loss')],
                 verbose=0,
             )
+            # Usa o menor MSE de validação como resultado do trial.
             return min(history.history['val_loss'])
         finally:
             # Executado também quando o Optuna interrompe um trial.
@@ -148,6 +153,7 @@ def main():
         keras.utils.set_random_seed(SEED)
         best_model = None
         try:
+            # Cria um novo modelo com os melhores hiperparâmetros.
             best_model = build_transformer(X_train.shape[1:], best_hps)
             early_stop_final = keras.callbacks.EarlyStopping(
                 monitor='val_loss', patience=7, restore_best_weights=True,
