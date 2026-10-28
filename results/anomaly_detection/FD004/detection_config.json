@@ -1,0 +1,25 @@
+{
+  "Dataset": "FD004",
+  "splits": [
+    "train",
+    "test"
+  ],
+  "consecutive_windows": 3,
+  "units_to_plot": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "calibration": {
+    "Dataset": "FD004",
+    "threshold": 0.028568823367892505,
+    "percentile": 99,
+    "source": "validation_nominal",
+    "validation_windows": 2119,
+    "fingerprint": "54927ba18648684daa27f6b207b819348a9534c648a688e6d3459f4207871d16",
+    "model_sha256": "7e1859122520e1abfce08f40f62804958f54150119c2b197f344f1019b89d764",
+    "FinalValidationReconstructionMSE": 0.01903304701495648
+  }
+}
