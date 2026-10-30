@@ -1,0 +1,5 @@
+Split,RULGroup,RULLimit,cumulative,motors_in_group,eligible_motors,insufficient_motors,missing_final_RUL,detected_motors,coverage_pct,alert_rul_median,alert_rul_q25,alert_rul_q75,alert_rul_iqr,Dataset,Percentile,Threshold,Persistence,nominal_motor_alert_pct,nominal_above_windows_pct,nominal_persistent_windows_pct,nominal_scope
+test,All,,True,100,100,0,0,31,31.0,86.0,56.0,175.5,119.5,FD003,99.0,0.014737010794581278,3,7.0,5.078299776286354,4.317673378076063,all_train_diagnostic_only
+train,All,,True,100,100,0,0,93,93.0,39.0,15.0,69.0,54.0,FD003,99.0,0.014737010794581278,3,7.0,5.078299776286354,4.317673378076063,all_train_diagnostic_only
+test,All,,True,100,100,0,0,30,30.0,84.0,54.5,182.25,127.75,FD003,99.0,0.014737010794581278,5,7.0,5.078299776286354,3.713646532438479,all_train_diagnostic_only
+train,All,,True,100,100,0,0,86,86.0,42.0,18.0,69.5,51.5,FD003,99.0,0.014737010794581278,5,7.0,5.078299776286354,3.713646532438479,all_train_diagnostic_only

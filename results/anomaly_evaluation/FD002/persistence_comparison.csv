@@ -1,0 +1,3 @@
+Dataset,Split,motors,detected_3,detected_5,alerts_disappearing,alerts_later,alerts_new_at_5,median_delay_cycles_among_later
+FD002,test,259,79,75,4,75,0,2.0
+FD002,train,260,260,260,0,260,0,2.0

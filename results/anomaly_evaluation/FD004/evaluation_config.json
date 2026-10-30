@@ -1,0 +1,49 @@
+{
+  "Dataset": "FD004",
+  "input_sha256": {
+    "reconstruction_errors.csv": "54af642d1bfa70874f440d645de0f2ab8e41d214a1649b10f59204716b77ae53",
+    "detection_summary.csv": "3d917f73421f23373d02e275666931fc0c8582af74f59800ff9d83dc77650f39",
+    "detection_config.json": "2786b612021215de4a2cac7f3da1da76556c2abfb32c85d647d711725a2046f3"
+  },
+  "preprocessing_fingerprint": "54927ba18648684daa27f6b207b819348a9534c648a688e6d3459f4207871d16",
+  "sequence_length": 30,
+  "nominal_fraction": 0.3,
+  "thresholds": {
+    "95.0": 0.02524106288013343,
+    "97.0": 0.026222334032245737,
+    "99.0": 0.028568823367892505,
+    "99.5": 0.031018925958503342
+  },
+  "persistences": [
+    3,
+    5
+  ],
+  "calibration_error_source": "existing_train_CSV_joined_to_validation_nominal_metadata",
+  "independent_calibration": false,
+  "regime_analysis_executed": true,
+  "baseline": {
+    "percentile": 99,
+    "persistence": 3
+  },
+  "coverage_denominator": "engines with at least k consecutive available windows",
+  "nominal_denominator": "full training engines with at least one fully nominal window",
+  "transition_near_end": "a regime change in the final 3 cycles of the window",
+  "individual_plots_units": [
+    1,
+    2,
+    3
+  ],
+  "original_results_audit": {
+    "above_threshold_mismatches": 0,
+    "persistent_anomaly_mismatches": 0,
+    "first_cycle_mismatches": 0,
+    "summary_missing_engines": 0,
+    "summary_detection_cycle_mismatches": 0,
+    "summary_windows_evaluated_mismatches": 0
+  },
+  "notes": [
+    "CSV foi ordenado temporalmente para avaliação; arquivo original preservado.",
+    "test: transition_inside sem grupo de contraste; associação não comparável.",
+    "train: transition_inside sem grupo de contraste; associação não comparável."
+  ]
+}

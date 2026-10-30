@@ -1,0 +1,48 @@
+{
+  "Dataset": "FD003",
+  "input_sha256": {
+    "reconstruction_errors.csv": "7b7e1e61e21473233d0108808fd1025ca8a363c355706b2795448ff151f92364",
+    "detection_summary.csv": "96d513f98b8d978bcf7d74e6b5a4b5deb8705208e241cded1e31adbfccfc109a",
+    "detection_config.json": "64793623bfa0f63b87c32f931261c689ee11bf472d61811b5d0a39f55d76c88c"
+  },
+  "preprocessing_fingerprint": "0b83a94d770f49c839dbea48ca17d1d434482abea2be861a1cf6b1e0d6214fb4",
+  "sequence_length": 30,
+  "nominal_fraction": 0.3,
+  "thresholds": {
+    "95.0": 0.0133623966664801,
+    "97.0": 0.01367601200700974,
+    "99.0": 0.014737010794581278,
+    "99.5": 0.015081722261204248
+  },
+  "persistences": [
+    3,
+    5
+  ],
+  "calibration_error_source": "existing_train_CSV_joined_to_validation_nominal_metadata",
+  "independent_calibration": false,
+  "regime_analysis_executed": false,
+  "baseline": {
+    "percentile": 99,
+    "persistence": 3
+  },
+  "coverage_denominator": "engines with at least k consecutive available windows",
+  "nominal_denominator": "full training engines with at least one fully nominal window",
+  "transition_near_end": "a regime change in the final 3 cycles of the window",
+  "individual_plots_units": [
+    1,
+    2,
+    3
+  ],
+  "original_results_audit": {
+    "above_threshold_mismatches": 0,
+    "persistent_anomaly_mismatches": 0,
+    "first_cycle_mismatches": 0,
+    "summary_missing_engines": 0,
+    "summary_detection_cycle_mismatches": 0,
+    "summary_windows_evaluated_mismatches": 0
+  },
+  "notes": [
+    "CSV foi ordenado temporalmente para avaliação; arquivo original preservado.",
+    "Análise de regimes não aplicável: dataset de condição operacional única."
+  ]
+}
