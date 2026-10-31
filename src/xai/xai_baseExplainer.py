@@ -5,7 +5,7 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import numpy as np
 import tensorflow as tf
-from src.ml.transformer_layers import PositionalEmbedding  # Registra a camada antes de load_model.
+from src.rul_prediction.models.transformer_layers import PositionalEmbedding  # Registra a camada antes de load_model.
 
 class BaseExplainer():
     def __init__(self, model_path, x_path, y_path):
