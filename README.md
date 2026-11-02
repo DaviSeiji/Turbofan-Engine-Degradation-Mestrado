@@ -5,6 +5,28 @@ O repositório reúne três áreas complementares: previsão de vida útil reman
 (RUL), detecção não supervisionada de anomalias e explicabilidade (XAI).
 A organização permite integração futura sem misturar os protocolos experimentais.
 
+## Ambiente e dependências
+
+A validação do commit `f172b59` utilizou Python **3.13.14**, Windows 11 x64,
+TensorFlow **2.20.0** e Keras **3.15.0**. As dependências usadas pelo projeto e
+suas versões estão em `requirements.txt`. Na raiz do repositório:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m pip check
+python -m unittest discover -s tests -v
+```
+
+Selecione esse mesmo ambiente como kernel dos notebooks no VS Code.
+O notebook de referência do artigo também importa `statsmodels` e `pwlf`:
+esses pacotes estavam ausentes no ambiente auditado e foram incluídos no
+requirements com versões cuja resolução para Python 3.13 foi verificada.
+A validação não instalou pacotes nem executou células de experimentos.
+As versões fixadas não representam uma validação de todas as plataformas.
+
+O resumo das verificações, das limitações e dos avisos está em
+[docs/validation_f172b59.md](docs/validation_f172b59.md).
+
 ## Organização
 
 ```text

@@ -1,0 +1,42 @@
+# Ambiente validado: CPython 3.13.14, Windows 11 x64.
+# Versoes do ambiente local; nao inclui pacotes sem uso no projeto (ex.: PyTorch).
+
+# Dados e metricas
+numpy==2.2.6
+pandas==2.3.2
+scipy==1.15.3
+scikit-learn==1.7.1
+joblib==1.5.2
+tabulate==0.10.0
+
+# Redes, serializacao e otimizacao
+tensorflow==2.20.0
+keras==3.15.0
+h5py==3.14.0
+keras-tuner==1.4.8
+optuna==4.9.0
+optuna-integration[tfkeras]==4.9.0
+xgboost==3.0.5
+
+# XAI e visualizacao
+shap==0.51.0
+lime==0.2.0.1
+timeshap==1.0.4
+altair==6.2.2
+numba==0.65.1
+llvmlite==0.47.0
+matplotlib==3.10.6
+seaborn==0.13.2
+
+# Notebooks e testes de suas celulas
+ipython==9.12.0
+ipykernel==7.2.0
+jupyterlab==4.5.7
+notebook==7.5.6
+nbformat==5.10.4
+
+# Notebook de referencia do artigo: ausentes no ambiente auditado.
+# Wheels/resolucao para Python 3.13 verificados via pip --dry-run;
+# o notebook nao foi executado e esses dois pacotes nao foram instalados.
+statsmodels==0.15.0
+pwlf==2.7.0
