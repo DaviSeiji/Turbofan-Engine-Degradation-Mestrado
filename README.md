@@ -70,6 +70,39 @@ preservados; não significam uma nova execução após a reorganização.
 
 ## Previsão de RUL
 
+### Pré-processamento RUL v2 — etapa 1
+
+A implementação independente em `src/rul_prediction/v2/` prepara divisões por
+motor (70% treino, 15% validação, 15% reserva; seed 42), ajusta transformadores
+somente no treino e gera teste terminal e teste por janela. FD001/FD003 usam
+MinMax global; FD002/FD004 usam seis regimes ajustados somente no treino.
+A reserva é apenas armazenada, sem calibração nesta etapa.
+
+Consulte [docs/rul_protocol_v2.md](docs/rul_protocol_v2.md) para formatos, decisões
+e limitações. Os comandos abaixo são para execução manual **após a revisão**:
+
+```powershell
+python -m src.rul_prediction.v2.preprocessing --help
+python -m src.rul_prediction.v2.preprocessing --datasets FD001 FD002 --seed 42
+python -m src.rul_prediction.v2.preprocessing --datasets FD003 FD004 --seed 42
+python -m src.rul_prediction.v2.preprocessing --datasets FD001 FD002 FD003 FD004 --validate-only
+```
+
+As saídas futuras ficam em `data/processed_rul_v2/FD00X/`. Não existe
+`--overwrite`: pastas de dataset existentes são recusadas. Para outra versão,
+use `--output-dir` com um novo diretório. `--validate-only` só lê artefatos salvos.
+Nesta implementação foram executados apenas testes sintéticos:
+
+```powershell
+python -B -m unittest tests.rul_prediction.test_v2_preprocessing -v
+```
+
+Nenhum dataset real foi processado para a entrega. Os scripts de treinamento
+existentes continuam usando a v1; treinamento/Optuna/avaliação v2 ainda não foram
+implementados.
+
+### Experimentos históricos — v1
+
 Modelos de referência ficam em `src/rul_prediction/models/baseline_models.py`;
 os notebooks em `notebooks/rul_prediction/` incluem baselines, CNN e CNN-LSTM,
 além do notebook de referência do artigo. O notebook de referência conserva suas
