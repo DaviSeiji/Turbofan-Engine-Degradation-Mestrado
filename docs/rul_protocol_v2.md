@@ -1,8 +1,10 @@
-# RUL v2 — etapa 1: pré-processamento por motor
+# RUL v2 — pré-processamento, treinamento e avaliação
 
-Esta etapa implementa somente preparação e persistência de dados. O processamento
-dos datasets reais fica a cargo do pesquisador após a revisão. Nenhum treinamento,
-Optuna, avaliação preditiva ou experimento de integração é implementado aqui.
+A etapa 1 implementa preparação e persistência de dados. A etapa 2 acrescenta
+treinamento e avaliação independentes, descritos ao final deste documento.
+Os dados da etapa 1 já foram processados e validados manualmente pelo pesquisador.
+A implementação da etapa 2 foi verificada somente com dados sintéticos e mocks:
+nenhuma rede, estudo Optuna ou avaliação real foi executado nesta entrega.
 
 ## Implementação independente e preservação da v1
 
@@ -12,12 +14,15 @@ O código novo está em `src/rul_prediction/v2/`:
   serializável `RULPreprocessor`.
 - `preprocessing.py`: leitura, RUL, janelas, gravação, validação de artefatos e CLI.
 - `__init__.py`: identificação do pacote, sem executar processamento.
+- `experiment.py`: carregamento por escopo, identidade e proteção de artefatos.
+- `train.py`: inspeção, Optuna persistente e treinamento final explícito.
+- `evaluation.py`: teste terminal, teste por janelas e comparação por seeds.
 
 A v1 continua em `src/common/preprocessing/preproc_data_nasa.py`, com os mesmos
 scripts e artefatos. Os scripts atuais de CNN-LSTM/Transformer ainda leem
 `data/processed_data/`: **não passam a utilizar v2 automaticamente**.
-O treinamento v2 será uma etapa posterior, usando arrays explícitos de treino e
-validação, em vez de `validation_split` sobre um array combinado.
+O treinamento v2 usa comandos próprios e arrays explícitos de treino e validação,
+em vez de `validation_split` sobre um array combinado.
 
 ## Divisão de motores
 
@@ -304,5 +309,198 @@ O pipeline atual materializa os arrays em memória por dataset. Isso é adequado
 estrutura atual, mas o custo real de RAM/tempo ainda não foi medido. O manifesto
 não substitui testes reais de qualidade após a revisão do pesquisador.
 
-Esta entrega termina na preparação dos dados. Treinamento, Optuna, avaliação
-preditiva, explicações XAI e fusão de modelos ficam para etapas separadas.
+As seções anteriores descrevem a etapa 1. A etapa 2 está abaixo; explicações XAI
+e fusão com o Autoencoder continuam fora do escopo.
+
+## Etapa 2 — treinamento e avaliação independentes
+
+### Dados e identidade
+
+O treinamento abre **somente** `train.npz`, `validation.npz` e seus metadados.
+Confere SHA256 desses arquivos, `config.json`, `features.json`, `splits.json` e
+`preprocessor.joblib` (este último é apenas conferido por hash, não desserializado).
+Confere ainda features ordenadas, shapes `(N, 30, F)`, arrays finitos, alvos,
+cap 125, alinhamento linha a linha, IDs disjuntos de desenvolvimento e padding.
+Não reajusta transformadores. `calibration.npz` e seus metadados nunca são abertos.
+Os IDs de calibração em `splits.json` servem apenas à checagem de disjunção.
+
+O SHA256 do manifesto completo identifica a versão do pré-processamento. Os
+hashes efetivos são conferidos **por escopo**, para não abrir arrays de teste
+durante seleção. A avaliação confere somente o protocolo de teste solicitado,
+os mesmos arquivos estruturais e a identidade registrada no modelo. A validação
+completa da etapa 1 continua disponível, mas não é chamada pelo treinamento.
+
+### Arquiteturas, busca e validação
+
+Reutilizam-se, sem alterações, `build_cnn_lstm` e `build_transformer` de
+`src/rul_prediction/models/model_builders.py`. Ambos usam Adam, MSE e MAE,
+entrada `(30, F)` e saída linear escalar. A CNN-LSTM é Conv1D → LSTM → Dropout →
+Dense(32, ReLU) → Dense(1). O Transformer usa projeção, posição treinável,
+encoders com atenção/residuais/normalização, pooling e cabeça de regressão.
+
+Espaços históricos:
+
+| Parâmetro | CNN-LSTM | Transformer |
+| --- | --- | --- |
+| filters / lstm_units | 32, 64, 128 | — |
+| kernel_size | 3 a 5, inteiros | — |
+| d_model | — | 32, 64, 128 |
+| num_heads | — | 2, 4, 8; todos dividem d_model |
+| ff_dim | — | 64, 128, 256 |
+| num_layers | — | 1 a 3 |
+| dropout_rate | 0,1 a 0,4; passo 0,1 | igual |
+| learning_rate | 1e-4 a 1e-2, log | igual |
+| batch_size | 32, 64, 128 | igual |
+
+Padrões v2: 30 trials **totais**, até 50 épocas por trial e por treino final,
+EarlyStopping em `val_loss`, patience 5, melhores pesos restaurados. Essas
+opções são configuráveis nas CLIs. O objetivo é o menor MSE nas **janelas da
+validação de motores independentes**, não uma média primeiro agregada por motor.
+O treino final usa os mesmos grupos separados: não une treino e validação.
+Não existe `validation_split` no pipeline novo.
+
+Cada dataset/arquitetura/experimento possui estudo próprio, TPESampler com seed
+padrão 42 e MedianPruner com `n_warmup_steps=5`, via TFKerasPruningCallback.
+A seed de cada trial é `(sampler_seed + trial.number) % 2**32`.
+A sessão Keras é limpa entre modelos, seeds Python/NumPy/TF são fixadas pelo
+Keras e operações determinísticas são solicitadas. Isso não garante igualdade
+entre ambientes/hardware diferentes. Reiniciar o TPESampler com a mesma seed
+também não reproduz necessariamente a sequência de uma busca sem interrupção.
+
+### Retomada e proteção
+
+`study_config.json` congela protocolo, configuração de treino, orçamento,
+dataset, features, SHA do manifesto, versões e hashes do código/arquiteturas.
+Uma divergência é recusada **antes de abrir o banco SQLite**. Para mudar dados,
+código, orçamento ou opções congeladas, use um novo `--experiment`.
+
+COMPLETE, PRUNED e FAIL consomem orçamento. Com 20 trials contabilizados e
+orçamento 30, são solicitados apenas 10. RUNNING e WAITING bloqueiam a retomada.
+Após confirmar que não existe processo ativo, `--fail-interrupted` permite
+marcar RUNNING como FAIL; esses trials continuam contabilizados. WAITING é
+recusado (esta CLI não enfileira trials). Não há execução paralela de workers.
+
+O arquivo `.lock` evita dois processos simultâneos no mesmo experimento. Uma
+interrupção normal o remove. Se houver encerramento abrupto, confira primeiro
+que o processo terminou e remova **apenas o `.lock` daquele experimento** antes
+de retomar. Não apague bancos ou pastas de resultados para contornar erros.
+
+O campeão gera um snapshot imutável `best_trial_N.json`; `N` é mostrado no
+terminal ao concluir o Optuna. A retomada pode gerar outro snapshot campeão.
+O comando `final --best-trial N` usa explicitamente aquele snapshot, sem abrir
+o teste nem reexecutar o Optuna. Use o campeão informado pela busca concluída.
+O SQLite é o único artefato científico mutável durante a retomada normal.
+
+Cada seed final grava modelo, configuração com hiperparâmetros, histórico,
+curva de MSE e manifesto com hashes e menor loss de validação. Pastas de seed
+existentes são recusadas, inclusive incompletas; não existe `--overwrite`.
+O mesmo vale para avaliações e tabelas comparativas. Falhas podem deixar uma
+pasta parcial protegida, que exige inspeção manual antes de nova tentativa.
+
+### Avaliação e comparação
+
+O comando `terminal` usa `test_terminal.npz`, exatamente uma previsão por motor,
+e compara com **`y_original` sem cap**. O comando `windows` usa as janelas de
+`test_windows.npz`, também com `y_original`, em outra pasta. Não há clipping
+de target ou previsão. Treinar com alvo limitado e avaliar sem cap é uma decisão
+explícita do protocolo: erros acima de 125 também contam; não compare diretamente
+esses números com métricas históricas calculadas com target limitado.
+
+Ambos calculam RMSE, MAE, mediana, percentil 95 (interpolação linear do NumPy)
+e máximo do erro absoluto. Terminal dá o mesmo peso a cada motor. Por janelas,
+motores longos contribuem mais; esses resultados são complementares, não devem
+ser misturados com os terminais. CSVs preservam todos os metadados, incluindo
+`Dataset, SourceSplit, Split, unit_nr, start_cycle, end_cycle`, além de Model,
+Seed, Experiment, RUL_true, RUL_pred e AbsoluteError. Um scatter real/predito é
+salvo, sem exibição interativa.
+
+`compare` exige as duas arquiteturas, todas as seeds solicitadas e exatamente
+o mesmo manifesto de dados e chaves/targets de teste, além de orçamento, épocas,
+patience, seed do sampler e versões/código do protocolo iguais. Não descarta seeds
+ausentes: falha explicitamente. Grava individuais e média/desvio padrão amostral
+(`ddof=1`) por dataset/modelo/protocolo. Com uma seed, o desvio não é estimável
+e fica vazio no CSV. Não seleciona melhor seed por teste nem agrega FDs distintos.
+
+Organização futura:
+
+```text
+models/rul_v2/FD001/cnn_lstm/baseline/
+  study_config.json
+  study.db
+  best_trial_N.json
+  seed_1/{model.keras,config.json,history.json,history.png,manifest.json}
+results/rul_prediction/v2/FD001/cnn_lstm/baseline/seed_1/
+  terminal/{predictions.csv,predictions.png,metrics.json,manifest.json}
+  windows/{predictions.csv,predictions.png,metrics.json,manifest.json}
+results/rul_prediction/v2/comparisons/comparacao_v2/terminal/
+  individual.csv
+  summary.csv
+  config.json
+```
+
+### Comandos manuais — não executados nesta implementação
+
+Na raiz do projeto, com o ambiente de dependências ativado. Comece em FD001;
+depois repita para FD002, FD003 e FD004, nesta ordem. Não reprocesse os dados.
+
+```powershell
+# Ajuda e inspeção sem importar TensorFlow nem criar estudos
+python -m src.rul_prediction.v2.train --help
+python -m src.rul_prediction.v2.train inspect --datasets FD001
+python -m src.rul_prediction.v2.evaluation --help
+
+# Otimização separada por arquitetura (30 trials totais cada)
+python -m src.rul_prediction.v2.train optimize --datasets FD001 --model cnn_lstm --experiment baseline --seed 42 --trials 30 --epochs 50 --patience 5
+python -m src.rul_prediction.v2.train optimize --datasets FD001 --model transformer --experiment baseline --seed 42 --trials 30 --epochs 50 --patience 5
+```
+
+Após cada busca, anote o número `N` do campeão. No PowerShell, informe os números
+reais (podem ser diferentes para cada arquitetura/dataset), sem assumir trial 0:
+
+```powershell
+$cnnTrial = [int](Read-Host 'Numero N de best_trial_N.json da CNN-LSTM FD001')
+$transformerTrial = [int](Read-Host 'Numero N de best_trial_N.json do Transformer FD001')
+python -m src.rul_prediction.v2.train final --datasets FD001 --model cnn_lstm --experiment baseline --best-trial $cnnTrial --seeds 1 2 3 4 5 --epochs 50 --patience 5
+python -m src.rul_prediction.v2.train final --datasets FD001 --model transformer --experiment baseline --best-trial $transformerTrial --seeds 1 2 3 4 5 --epochs 50 --patience 5
+
+# Apenas depois de fixar os hiperparâmetros e concluir todas as seeds
+python -m src.rul_prediction.v2.evaluation terminal --datasets FD001 --model cnn_lstm --experiment baseline --seeds 1 2 3 4 5
+python -m src.rul_prediction.v2.evaluation terminal --datasets FD001 --model transformer --experiment baseline --seeds 1 2 3 4 5
+python -m src.rul_prediction.v2.evaluation windows --datasets FD001 --model cnn_lstm --experiment baseline --seeds 1 2 3 4 5
+python -m src.rul_prediction.v2.evaluation windows --datasets FD001 --model transformer --experiment baseline --seeds 1 2 3 4 5
+python -m src.rul_prediction.v2.evaluation compare --datasets FD001 --experiment baseline --seeds 1 2 3 4 5 --protocol terminal --comparison comparacao_v2
+python -m src.rul_prediction.v2.evaluation compare --datasets FD001 --experiment baseline --seeds 1 2 3 4 5 --protocol windows --comparison comparacao_v2
+```
+
+Repita os comandos trocando FD001 pelo próximo FD e lendo os respectivos trials.
+Para a tabela conjunta, após avaliar todos, use outro nome de comparação:
+
+```powershell
+python -m src.rul_prediction.v2.evaluation compare --datasets FD001 FD002 FD003 FD004 --experiment baseline --seeds 1 2 3 4 5 --protocol terminal --comparison todos_fd_v2
+```
+
+Para retomar Optuna, repita o comando original. Use `--fail-interrupted` somente
+na situação documentada acima. O `final` aceita uma lista de FDs, mas um único
+`--best-trial`: prefira um FD por comando para não confundir campeões distintos.
+
+### Testes e limites da entrega
+
+```powershell
+python -B -m unittest tests.rul_prediction.test_v2_training -v
+```
+
+Verificação desta entrega: **35 testes aprovados**, sendo 16 de
+`test_v2_preprocessing` e 19 de `test_v2_training`, sem falhas ou testes pulados.
+
+Os testes usam dados sintéticos em diretórios temporários e mocks de `fit`,
+`Study.optimize`, modelos salvos e `predict`. Exercitam contratos dos NPZ,
+escopos sem teste/calibração, métricas, retomada, configuração, proteção da v1,
+seeds, avaliação e comparação. Todas as CLIs `--help` são exercitadas com imports
+de TensorFlow e Optuna bloqueados. Não são testes de convergência, desempenho,
+serialização Keras real ou compatibilidade numérica GPU. A suíte histórica não
+foi executada para evitar carregar modelos/dados reais fora deste escopo.
+
+A reserva de calibração permanece intocada. Antes de associar os CSVs a anomaly
+scores, alinhe os motores e protocolos do AE, que hoje possui partição própria.
+As chaves preservadas não garantem, por si só, independência do treinamento do
+AE. Nenhuma fusão, calibração automática ou experimento XAI foi acrescentado.

@@ -97,9 +97,37 @@ Nesta implementação foram executados apenas testes sintéticos:
 python -B -m unittest tests.rul_prediction.test_v2_preprocessing -v
 ```
 
-Nenhum dataset real foi processado para a entrega. Os scripts de treinamento
-existentes continuam usando a v1; treinamento/Optuna/avaliação v2 ainda não foram
-implementados.
+O processamento real da etapa 1 foi feito e validado manualmente pelo pesquisador.
+Os scripts históricos continuam usando a v1, sem migração automática.
+
+### Treinamento e avaliação RUL v2 — etapa 2
+
+Implementados em `src/rul_prediction/v2/train.py` e `evaluation.py`, reutilizando
+as arquiteturas CNN-LSTM e Transformer existentes. O treino usa somente treino
+e validação por motores, sem `validation_split`. O teste terminal principal usa
+`y_original` sem cap; o teste por janela é complementar. A calibração fica reservada.
+
+```powershell
+python -m src.rul_prediction.v2.train --help
+python -m src.rul_prediction.v2.train inspect --datasets FD001
+python -m src.rul_prediction.v2.train optimize --datasets FD001 --model cnn_lstm --experiment baseline --seed 42 --trials 30 --epochs 50
+python -m src.rul_prediction.v2.train optimize --datasets FD001 --model transformer --experiment baseline --seed 42 --trials 30 --epochs 50
+python -m src.rul_prediction.v2.train final --help
+python -m src.rul_prediction.v2.evaluation --help
+python -B -m unittest tests.rul_prediction.test_v2_training -v
+```
+
+Os comandos de otimização acima são para **execução manual após revisão**.
+Use `final --best-trial N` com o campeão mostrado por cada busca e `--seeds 1 2 3 4 5`.
+Siga FD001 → FD002 → FD003 → FD004. Comandos completos de treino final,
+avaliação terminal/janelas e comparação estão na
+[seção da etapa 2](docs/rul_protocol_v2.md#etapa-2--treinamento-e-avaliação-independentes).
+
+Estudos SQLite retomam um orçamento **total**, com checagem de identidade dos
+dados/configuração. Modelos ficam em `models/rul_v2/` e avaliações em
+`results/rul_prediction/v2/`, separados por FD/modelo/experimento/seed/protocolo.
+Não há sobrescrita de modelos ou resultados. Nesta implementação foram executados
+apenas testes sintéticos/mocks, sem treinamento, Optuna ou avaliação real.
 
 ### Experimentos históricos — v1
 
