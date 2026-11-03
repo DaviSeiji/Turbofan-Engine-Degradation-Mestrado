@@ -129,6 +129,39 @@ dados/configuração. Modelos ficam em `models/rul_v2/` e avaliações em
 Não há sobrescrita de modelos ou resultados. Nesta implementação foram executados
 apenas testes sintéticos/mocks, sem treinamento, Optuna ou avaliação real.
 
+Para encadear as etapas v2 automaticamente, edite as configurações no início de
+`src/rul_prediction/v2/run_pipeline.py` (`DATASETS` contém FD001 até FD004).
+O script executa as duas arquiteturas, usa o campeão de cada busca, treina as
+cinco seeds e só então avalia e compara os resultados:
+
+```powershell
+python -m src.rul_prediction.v2.run_pipeline --dry-run
+python -m src.rul_prediction.v2.run_pipeline
+```
+
+O segundo comando **executa os experimentos reais**. Datasets completos e
+compatíveis são conferidos por hashes e pulados automaticamente; comparações
+já existentes também são preservadas. Execuções parciais/incompatíveis interrompem
+o runner: continue pelas CLIs individuais documentadas no protocolo. Nada é
+sobrescrito. Avisos INFO/WARNING do TensorFlow são silenciados; erros continuam visíveis.
+
+### Análise dos resultados RUL v2 — Etapa A
+
+A consolidação usa exclusivamente previsões e métricas já salvas, sem executar
+redes, estudos Optuna ou reprocessar dados. O relatório está em
+[docs/rul_v2_results_analysis.md](docs/rul_v2_results_analysis.md); tabelas,
+figuras e hashes em `results/rul_prediction/v2/analysis/baseline_a_v1/`.
+
+```powershell
+python -m src.rul_prediction.v2.analyze_results --help
+python -B -m unittest tests.rul_prediction.test_v2_analysis -v
+# Nome novo para repetir sem sobrescrever a análise existente:
+python -m src.rul_prediction.v2.analyze_results --name baseline_a_v2
+```
+
+A avaliação terminal sem cap continua principal. A análise inclui faixas de RUL,
+variação entre seeds e métricas contra alvo limitado explicitamente complementares.
+
 ### Experimentos históricos — v1
 
 Modelos de referência ficam em `src/rul_prediction/models/baseline_models.py`;

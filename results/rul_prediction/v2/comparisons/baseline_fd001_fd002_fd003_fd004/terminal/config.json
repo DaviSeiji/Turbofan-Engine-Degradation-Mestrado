@@ -1,0 +1,22 @@
+{
+  "datasets": [
+    "FD001",
+    "FD002",
+    "FD003",
+    "FD004"
+  ],
+  "models": [
+    "cnn_lstm",
+    "transformer"
+  ],
+  "experiment": "baseline",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "protocol": "terminal",
+  "std_ddof": 1
+}
