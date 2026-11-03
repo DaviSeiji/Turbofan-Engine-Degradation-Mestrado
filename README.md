@@ -194,6 +194,34 @@ Optuna, sem modificar o estudo original.
 
 ## Detecção de anomalias
 
+### AE coordenado ao RUL v2 — Etapa C
+
+A nova preparação independente em `src/anomaly_detection/v2/` herda os IDs de
+`data/processed_rul_v2/FD00X/splits.json` e separa **somente RUL train** em 80%
+AE fit / 20% inner-validation. Features, scalers e KMeans são ajustados apenas
+nos 30% iniciais dos motores AE fit. Teste/reserva não são preparados por padrão.
+O contrato de alinhamento futuro inclui padding explícito para motores curtos,
+mas não gera reconstruction errors ou executa redes.
+
+```powershell
+python -m src.anomaly_detection.v2.preprocessing --help
+# Execução manual após revisão, começando pelo FD001:
+python -m src.anomaly_detection.v2.preprocessing --datasets FD001 --seed 42 --nominal-fraction 0.30 --inner-validation-fraction 0.20
+python -m src.anomaly_detection.v2.preprocessing --datasets FD001 --validate-only
+# Após conferir FD001:
+python -m src.anomaly_detection.v2.preprocessing --datasets FD002 FD003 FD004
+python -m src.anomaly_detection.v2.preprocessing --datasets FD001 FD002 FD003 FD004 --validate-only
+python -B -m unittest tests.anomaly_detection.test_coordinated_preprocessing -v
+```
+
+Saídas em `data/processed_anomaly_v2/FD00X/`, com criação exclusiva e manifestos:
+nada é sobrescrito, incluindo pastas parciais. Nenhum processamento real foi
+executado na implementação. Consulte
+[o protocolo coordenado](docs/ae_rul_v2_coordinated_preprocessing.md) e
+[a auditoria de compatibilidade](docs/ae_rul_v2_compatibility_audit.md).
+
+### Autoencoder histórico — preservado
+
 O LSTM Autoencoder reconstrói janelas de 30 ciclos. A região nominal assumida
 corresponde aos primeiros 30% das trajetórias completas de desenvolvimento;
 RUL é apenas metadado de avaliação. O baseline mantém MSE de reconstrução,
