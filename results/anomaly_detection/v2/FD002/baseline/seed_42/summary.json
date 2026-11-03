@@ -1,0 +1,18 @@
+{
+  "Dataset": "FD002",
+  "experiment": "baseline",
+  "seed": 42,
+  "best_trial": 26,
+  "best_validation_mse": 0.028805525973439217,
+  "best_epoch": 50,
+  "epochs_run": 50,
+  "params": {
+    "latent_dim": 32,
+    "encoder_units": 64,
+    "num_layers": 1,
+    "dropout_rate": 0.0,
+    "learning_rate": 0.009412491536580867,
+    "batch_size": 64
+  },
+  "preprocessing_manifest_sha256": "7314c4181289e72b5a745d2ba7448d1855aecb84f72c9ceb4ab63c46c872609f"
+}
