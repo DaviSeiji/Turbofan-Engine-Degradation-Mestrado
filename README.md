@@ -220,6 +220,29 @@ executado na implementação. Consulte
 [o protocolo coordenado](docs/ae_rul_v2_coordinated_preprocessing.md) e
 [a auditoria de compatibilidade](docs/ae_rul_v2_compatibility_audit.md).
 
+### Treinamento do AE coordenado — Etapa E
+
+Busca e treino final separados, apenas com janelas nominais AE fit/inner-validation
+dentro de RUL train. Reutiliza o builder LSTM Autoencoder histórico sem alterá-lo.
+
+```powershell
+python -m src.anomaly_detection.v2.train --help
+python -m src.anomaly_detection.v2.train inspect --datasets FD001
+# Executam treinamento SOMENTE quando chamados manualmente:
+python -m src.anomaly_detection.v2.train optimize --datasets FD001 --experiment baseline --seed 42 --trials 30 --epochs 50 --patience 5
+$campeaoAE = Get-Content -Encoding UTF8 -Raw models/anomaly_v2/FD001/baseline/best_trial_*.json | ConvertFrom-Json
+python -m src.anomaly_detection.v2.train final --datasets FD001 --experiment baseline --best-trial $campeaoAE.trial --seed 42 --epochs 50 --patience 5
+# Apenas verifica/carrega o modelo salvo, sem inferência:
+python -m src.anomaly_detection.v2.train inspect --datasets FD001 --experiment baseline --model-seed 42
+```
+
+Optuna tem orçamento **total** e retomada compatível; mudanças exigem novo
+experimento. Saídas exclusivas em `models/anomaly_v2/` e
+`results/anomaly_detection/v2/`. Modelos/seed existentes são preservados,
+inclusive parciais. Não calcula threshold ou scores. Nenhum treinamento,
+Optuna real ou inferência foi executado na implementação.
+Veja [protocolo, retomada, testes e comandos FD002–FD004](docs/ae_rul_v2_training.md).
+
 ### Autoencoder histórico — preservado
 
 O LSTM Autoencoder reconstrói janelas de 30 ciclos. A região nominal assumida

@@ -335,7 +335,9 @@ class CoordinatedPreprocessingTests(unittest.TestCase):
                      ROOT / 'models', ROOT / 'results', self.raw_dir, self.rul_dir):
             with self.subTest(path=path), self.assertRaises(ValueError):
                 output_target(path, self.raw_dir, self.rul_dir, 'FD001')
-        self.assertEqual(output_target(OUTPUT_DIR, self.raw_dir, self.rul_dir, 'FD001'), OUTPUT_DIR / 'FD001')
+        # Independe de o usuário já ter preparado FD001 na pasta real.
+        with patch.object(Path, 'exists', return_value=False):
+            self.assertEqual(output_target(OUTPUT_DIR, self.raw_dir, self.rul_dir, 'FD001'), OUTPUT_DIR / 'FD001')
 
     def test_same_seed_same_arrays_and_different_seed_different_inner_ids(self):
         first = self.prepared()
